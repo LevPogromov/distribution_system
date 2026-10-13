@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
     FILE *f = fopen("mandelbrot.csv", "w");
     if (!f) { perror("file open error"); return 1; }
 
-    fprintf(f, "x,y\n");
+    fprintf(f, "x, y\n");
     for (int i = 0; i < npoints_count; ++i) {
         fprintf(f, "%.10lf, %.10lf\n", ansX[i], ansY[i]);
     }
