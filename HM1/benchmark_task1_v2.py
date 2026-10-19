@@ -75,7 +75,6 @@ def main():
                                         "median": statistics.median(times),
                                         })
         else:
-            continue
             for threads in THREADS:
                 for params in INPUT:
                     times = []

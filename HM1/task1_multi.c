@@ -39,8 +39,8 @@ int in_mandelbrot(double cr, double ci)
     return 1;
 }
 
-float rand_unit(unsigned int* seed) {
-    return (float)rand_r(seed) / (float)RAND_MAX;   // [0, 1]
+double rand_unit(unsigned int* seed) {
+    return (double)rand_r(seed) / (double)RAND_MAX;   // [0, 1]
 }
 
 void* routine(void* rank) {
@@ -53,8 +53,8 @@ void* routine(void* rank) {
         pthread_mutex_unlock(&mutex);
         if (done) break;
 
-        float x = xmin + (xmax - xmin) * rand_unit(&seed);
-        float y = ymin + (ymax - ymin) * rand_unit(&seed);
+        double x = xmin + (xmax - xmin) * rand_unit(&seed);
+        double y = ymin + (ymax - ymin) * rand_unit(&seed);
 
         if (in_mandelbrot(x, y)) {
             pthread_mutex_lock(&mutex);
@@ -96,15 +96,15 @@ int main(int argc, char* argv[]) {
 
 
     // for (int i = 0; i < npoints_count; ++i) {
-    //     printf("x=%f, y=%f\n", ansX[i], ansY[i]);
+    //     printf("x=%lf, y=%lf\n", ansX[i], ansY[i]);
     // }
 
     FILE *f = fopen("mandelbrot.csv", "w");
     if (!f) { perror("file open error"); return 1; }
 
-    fprintf(f, "x,y\n");
+    fprintf(f, "x, y\n");
     for (int i = 0; i < npoints_count; ++i) {
-        fprintf(f, "%.10f, %.10f\n", ansX[i], ansY[i]);
+        fprintf(f, "%.10lf, %.10lf\n", ansX[i], ansY[i]);
     }
     fclose(f);
 
