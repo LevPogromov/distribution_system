@@ -16,4 +16,12 @@ task1_mono: task1_mono.c
 	gcc -o build/task1_mono -lpthread -O3 task1_mono.c
 	cp generate.py build/
 
+task2: task2.c
+	mkdir -p build
+	gcc -o build/task2 task2.c -pthread -lm
+
+task2_orig:
+	mkdir -p build
+	gcc -o build/task2_orig task2_orig.c -lm
+
 task1: task1_mono task1_multi

@@ -25,7 +25,7 @@ double* local_force_x;
 double* local_force_y;
 double* force_x;
 double* force_y;
-FILE* out;
+FILE* out = NULL;
 
 void barier() {
     pthread_mutex_lock(&mutex);
@@ -39,45 +39,50 @@ void barier() {
     pthread_mutex_unlock(&mutex);
 }
 
+void get_pair(long long pair_ind, int* i, int* j) {
+    int row = 0;
+    while (pair_ind >= num_particles - 1 - row) {
+        pair_ind -= num_particles - 1 - row;
+        row++;
+    }
+    *i = row;
+    *j = row + 1 + (int) pair_ind;
+}
+
 void* routine(void* rank) {
     int my_rank = (int)rank;
-    int particle_start = my_rank * (num_particles - 1) / thread_count;
-    int particle_end = (my_rank + 1) * (num_particles - 1) / thread_count;
-    while (t != t_end) {
+    long long pair_count = (long long)num_particles * (num_particles - 1) / 2;
+    long long pair_start = (long long)my_rank * pair_count / thread_count;
+    long long pair_end = (long long)(my_rank + 1) * pair_count / thread_count;
+    int force_start = my_rank * num_particles / thread_count;
+    int force_end = (my_rank + 1) * num_particles / thread_count;
 
+    while (t != t_end) {
         for (int i = 0; i < num_particles; i++) {
             local_force_x[my_rank * num_particles + i] = 0;
             local_force_y[my_rank * num_particles + i] = 0;
         }
-
-        for (int i = particle_start; i < particle_end; i++) {
-            for (int j = i + 1; j < num_particles; j++) {
-
-                double x = particles[j].x - particles[i].x;
-                double y = particles[j].y - particles[i].y;
-
-                double r2 = x * x + y * y;
-                double r3 = r2 * sqrt(r2);
-
-                double fx =
-                    G * particles[i].m * particles[j].m * x / r3;
-
-                double fy =
-                    G * particles[i].m * particles[j].m * y / r3;
-
-                local_force_x[my_rank * num_particles + i] += fx;
-                local_force_y[my_rank * num_particles + i] += fy;
-
-                local_force_x[my_rank * num_particles + j] -= fx;
-                local_force_y[my_rank * num_particles + j] -= fy;
+        int i, j;
+        get_pair(pair_start, &i, &j);
+        for (long long pair_ind = pair_start; pair_ind < pair_end; pair_ind++) {
+            double x = particles[j].x - particles[i].x;
+            double y = particles[j].y - particles[i].y;
+            double r2 = x * x + y * y;
+            double r3 = r2 * sqrt(r2);
+            double fx = G * particles[i].m * particles[j].m * x / r3;
+            double fy = G * particles[i].m * particles[j].m * y / r3;
+            local_force_x[my_rank * num_particles + i] += fx;
+            local_force_y[my_rank * num_particles + i] += fy;
+            local_force_x[my_rank * num_particles + j] -= fx;
+            local_force_y[my_rank * num_particles + j] -= fy;
+            j++;
+            if (j >= num_particles) {
+                i++;
+                j = i + 1;
             }
         }
 
         barier();
-
-        int force_start = my_rank * num_particles / thread_count;
-
-        int force_end = (my_rank + 1) * num_particles / thread_count;
 
         for (int i = force_start; i < force_end; i++) {
             force_x[i] = 0;
@@ -94,7 +99,6 @@ void* routine(void* rank) {
         for (int i = force_start; i < force_end; i++) {
             particles[i].x += particles[i].vx;
             particles[i].y += particles[i].vy;
-
             particles[i].vx += force_x[i] / particles[i].m;
             particles[i].vy += force_y[i] / particles[i].m;
         }
@@ -103,23 +107,31 @@ void* routine(void* rank) {
 
         if (my_rank == 0) {
             t++;
-            fprintf(out, "%d", t);
-            for (int i = 0; i < num_particles; i++) {
-                fprintf(out, ", %lf, %lf", particles[i].x, particles[i].y);
+            if (out != NULL) {
+                fprintf(out, "%d", t);
+                for (int i = 0; i < num_particles; i++) {
+                    fprintf(out, ", %lf, %lf",
+                            particles[i].x, particles[i].y);
+                }
+                fprintf(out, "\n");
             }
-            fprintf(out, "\n");
         }
-
         barier();
     }
-
-    return NULL;
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 4) {
-        fprintf(stderr, "Please retry this: %s <number of threads>  <t_end>  <input file>\n", argv[0]);
+    if (argc < 4 || argc > 5) {
+        fprintf(stderr, "Please retry this: %s <number of threads>  <t_end>  <input file> [-output]\n", argv[0]);
         return 1;
+    }
+
+    int write_output = 0;
+    if (argc == 5) {
+        if (strcmp(argv[4], "-output") == 0) {
+            write_output = 1;
+        }
+
     }
     thread_count = strtol(argv[1], NULL, 10);
     t_end = strtol(argv[2], NULL, 10);
@@ -141,12 +153,16 @@ int main(int argc, char* argv[]) {
         &particles[i].y, &z, &particles[i].vx, &particles[i].vy, &vz);        
     }
     fclose(file);
-    out = fopen("output.csv", "w");
-    fprintf(out, "0");
-    for (int i = 0; i < num_particles; i++) {
-       fprintf(out, ", %lf, %lf", particles[i].x, particles[i].y);
+
+    if (write_output) {
+        out = fopen("output.csv", "w");
+        fprintf(out, "0");
+        for (int i = 0; i < num_particles; i++) {
+            fprintf(out, ", %lf, %lf", particles[i].x, particles[i].y);
+        }
+        fprintf(out, "\n");
     }
-    fprintf(out, "\n");
+
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);
     for (int i = 0; i < thread_count; i++) {
@@ -161,7 +177,9 @@ int main(int argc, char* argv[]) {
     clock_gettime(CLOCK_MONOTONIC, &end);
     double spent = end.tv_sec - start.tv_sec + (end.tv_nsec - start.tv_nsec) / 1e9;
     printf("Time spent: %lf\n", spent);
-    fclose(out);
+    if (write_output) {
+        fclose(out);
+    }
     free(particles);
     free(thread_handles);
     free(local_force_x);
