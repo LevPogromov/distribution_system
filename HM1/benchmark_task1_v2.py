@@ -17,8 +17,8 @@ INPUT = [
 ]
 
 REALIZATIONS = [
-    ("Pthread", "./build/task1"),
-    ("Orig", "./build/task1_orig"),  # сюда добавить свою реализацию, если будет
+    ("Pthread", "./build/task1_mono"),
+    ("Orig", "./build/task1_multi"),  # сюда добавить свою реализацию, если будет
 ]
 
 ATTEMPTS = 100

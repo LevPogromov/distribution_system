@@ -46,7 +46,9 @@ double rand_unit(unsigned int* seed) {
 void* routine(void* rank) {
     long this_rank = (long) rank;
     unsigned int seed = (unsigned int)(time(NULL) ^ (this_rank * 2654435761u));
-
+    // x ^ y = z
+    // x ^ z = y
+    // z ^ y = x
     while (1) {
         pthread_mutex_lock(&mutex);
         int done = (npoints_count >= npoints);
