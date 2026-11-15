@@ -10,17 +10,17 @@ int main(int argc, char* argv[]) {
     }
     long attempts = strtol(argv[1], NULL, 10);
     long thread_count = strtol(argv[2], NULL, 10);
-    int dots = 0;
-    double x, y;
+    long dots = 0;
     double start, finish;
     
     GET_TIME(start);
     #pragma omp parallel for num_threads(thread_count) reduction(+: dots)
-    for (int i = 0; i < attempts; i++) {
-        x = (double)rand()/RAND_MAX*2.0-1.0; //float in range -1 to 1
-        y = (double)rand()/RAND_MAX*2.0-1.0; //float in range -1 to 1
+    for (long i = 0; i < attempts; i++) {
+        unsigned int seed = (unsigned int)(time(NULL) ^ (omp_get_thread_num() * 2654435761u));
+        double x = (double)rand_r(&seed)/RAND_MAX*2.0-1.0; //float in range -1 to 1
+        double y = (double)rand_r(&seed)/RAND_MAX*2.0-1.0; //float in range -1 to 1
 
-        if (x * x + y * y <= 1) {
+        if (x * x + y * y <= 1.0) {
             dots++;
         }
     }

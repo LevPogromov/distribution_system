@@ -8,11 +8,11 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     long attempts = strtol(argv[1], NULL, 10);
-    int dots = 0;
+    long dots = 0;
     double x, y;
     double start, finish;
     GET_TIME(start);
-    for (int i = 0; i < attempts; i++) {
+    for (long i = 0; i < attempts; i++) {
         x = (double)rand()/RAND_MAX*2.0-1.0; //float in range -1 to 1
         y = (double)rand()/RAND_MAX*2.0-1.0; //float in range -1 to 1
 
@@ -23,6 +23,6 @@ int main(int argc, char* argv[]) {
     GET_TIME(finish);
     printf("Elapsed time = %e seconds\n", finish - start);
     double pi = (double)dots / (double)attempts;
-    printf("Pi = %.10f", 4*pi);
+    printf("Pi = %.9f", 4*pi);
     return 0;
 }
