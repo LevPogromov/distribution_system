@@ -3,7 +3,7 @@
 #include "timer.h"
 
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
+    if (argc > 3) {
         printf("Using: ./task1_single <attempts>\n");
         return 1;
     }

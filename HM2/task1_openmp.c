@@ -4,7 +4,7 @@
 #include "timer.h"
 
 int main(int argc, char* argv[]) {
-    if (argc != 3) {
+    if (argc > 3) {
         printf("Using: ./task1_openmp <attempts> <thread_count>\n");
         return 1;
     }
@@ -14,16 +14,22 @@ int main(int argc, char* argv[]) {
     double start, finish;
     
     GET_TIME(start);
-    #pragma omp parallel for num_threads(thread_count) reduction(+: dots)
+
+#pragma omp parallel num_threads(thread_count) reduction(+: dots) 
+{
+    unsigned int seed = (unsigned int)(time(NULL) ^ (omp_get_thread_num() * 2654435761u));
+
+    #pragma omp for
     for (long i = 0; i < attempts; i++) {
-        unsigned int seed = (unsigned int)(time(NULL) ^ (omp_get_thread_num() * 2654435761u));
         double x = (double)rand_r(&seed)/RAND_MAX*2.0-1.0; //float in range -1 to 1
         double y = (double)rand_r(&seed)/RAND_MAX*2.0-1.0; //float in range -1 to 1
-
+        
         if (x * x + y * y <= 1.0) {
             dots++;
         }
     }
+}
+
     GET_TIME(finish);
     
     printf("Elapsed time = %e seconds\n", finish - start);
