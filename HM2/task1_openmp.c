@@ -13,7 +13,8 @@ int main(int argc, char* argv[]) {
     long dots = 0;
     double start, finish;
     
-    GET_TIME(start);
+    // GET_TIME(start);
+    start = omp_get_wtime();
 
 #pragma omp parallel num_threads(thread_count) reduction(+: dots) 
 {
@@ -30,7 +31,8 @@ int main(int argc, char* argv[]) {
     }
 }
 
-    GET_TIME(finish);
+    // GET_TIME(finish);
+    finish = omp_get_wtime();
     
     printf("Elapsed time = %e seconds\n", finish - start);
     double pi = (double)dots / (double)attempts;
