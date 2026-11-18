@@ -12,3 +12,11 @@ task2_openmp:
 	-I/opt/homebrew/opt/libomp/include \
 	-L/opt/homebrew/opt/libomp/lib \
 	task2_openmp.cpp -o build/task2_openmp
+
+task4_single:
+	mkdir -p build/
+	gcc-16 -Iutils -o build/task4_single task4.c
+
+task4_openmp:
+	mkdir -p build/
+	gcc-16 -Iutils -fopenmp -o build/task4_openmp task4_openmp.c
